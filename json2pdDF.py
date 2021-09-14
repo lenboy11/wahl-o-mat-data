@@ -18,11 +18,11 @@ import networkx as nx
 #                        console.log(JSON.stringify(...))   |    Substitute \&quot; with "" or nothing  |     See below
 
 # Import json-data
-with open("json/parteien.json") as f:
+with open("json/parteien.json", encoding='utf-8') as f:
     parties = json.load(f)
-with open("json/thesen.json") as f:
+with open("json/thesen.json", encoding='utf-8') as f:
     theses = json.load(f)
-with open("json/parteienThesen.json") as f:
+with open("json/parteienThesen.json", encoding='utf-8') as f:
     partiesOpinion = json.load(f)
 
 # Due to the structure of partiesOpinion we consider the name of the parties as columns
@@ -30,16 +30,21 @@ with open("json/parteienThesen.json") as f:
 partyList = []
 for l in parties:
     partyList.append(l[0][1].rstrip().lstrip())
-index = range(len(parties))
 
-df = pd.DataFrame( partiesOpinion, index = index, columns = partyList )
+thesesList = []
+for l in theses:
+    thesesList.append(l[0][0])
+
+df = pd.DataFrame( partiesOpinion, index = thesesList, columns = partyList )
+# This Dataframe gives a great overview of the table
+
 res = np.zeros((len(parties), len(parties)), dtype= np.int32)
-
 for c in range(len(partiesOpinion)):
     for i in range(len(partiesOpinion[c])-1):
         for j in range(i+1, len(partiesOpinion[c])):
             res[i][j] += 1 - abs(partiesOpinion[c][i] - partiesOpinion[c][j])/2
-    
+
+# Shows the relationship between to parties (upper-right triangular matrix)    
 dfRes = pd.DataFrame(res, partyList, partyList, dtype= np.int32)
 
 lineWidthList = []
@@ -49,14 +54,15 @@ i = 0
 for party in partyList:
     i += 1
     G.add_node(party)
-    nodeSizeList.append((700*len(partyList))/(5*i+len(partyList)))
+    nodeSizeList.append(max(50, 700 - 20*i))
 for i in range(len(res)-1):
     for j in range(i+1, len(res)):
         G.add_edge( partyList[i], partyList[j], weight=3*res[i][j] )
         lineWidthList.append(0.05 + 0.02*res[i][j])
 
-pos = nx.spring_layout(G) # positions for all nodes
+pre_pos = {partyList[2]: (1,0.5), partyList[4]: (0,0.5)}
+pos = nx.spring_layout(G, k=0.25, iterations=100, pos=pre_pos)  # positions for all nodes
 
 nx.draw_networkx_nodes(G, pos, node_size=nodeSizeList)
-nx.draw_networkx_labels(G, pos, font_size=20,font_family='sans-serif')
+nx.draw_networkx_labels(G, pos, font_size=12, font_family='sans-serif')
 nx.draw_networkx_edges(G, pos, width=lineWidthList)
