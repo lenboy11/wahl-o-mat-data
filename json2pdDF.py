@@ -60,6 +60,7 @@ for i in range(len(res)-1):
         G.add_edge( partyList[i], partyList[j], weight=3*res[i][j] )
         lineWidthList.append(0.05 + 0.02*res[i][j])
 
+#             AfD     right Side | Die Linke   left Side
 pre_pos = {partyList[2]: (1,0.5), partyList[4]: (0,0.5)}
 pos = nx.spring_layout(G, k=0.25, iterations=100, pos=pre_pos)  # positions for all nodes
 
